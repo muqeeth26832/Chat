@@ -32,7 +32,7 @@ const registerUser = asyncHandler(async (req, res) => {
   // Set the token as a cookie and send the response
   return res
     .status(201)
-    .cookie("token", token, options)
+    .cookie("token", token)
     .json(
       new ApiResponse(201, { id: user._id }, "User registered successfully")
     );
@@ -40,7 +40,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   //
-  console.log(req.body);
+
   const { username, password } = req.body;
 
   // Validate input
@@ -73,15 +73,18 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const getUserProfile = asyncHandler(async (req, res) => {
-  const token = req.cookies?.token;
-  if (token) {
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, {}, (err, userData) => {
-      if (err) throw err;
+  console.log("Was called ");
 
-      res.json(userData);
+  const token = req.cookies?.token;
+
+  if (token) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, {}, (err, data) => {
+      if (err) throw err;
+      res.json(data);
     });
+  } else {
+    res.status(403).send("no token");
   }
-  res.status(401).json("no token");
 });
 
 export { registerUser, loginUser, getUserProfile };
