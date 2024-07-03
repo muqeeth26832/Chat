@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-// import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 const options = {
   httpOnly: true,
   secure: true,
@@ -27,7 +27,7 @@ const registerUser = asyncHandler(async (req, res) => {
   const user = await User.create({ username, password });
 
   // Create a JWT token
-  const { token } = user.generateAccessToken();
+  const token = user.generateAccessToken();
 
   // Set the token as a cookie and send the response
   return res
@@ -61,15 +61,27 @@ const loginUser = asyncHandler(async (req, res) => {
 
   // password is correct give user an acces token
   // Create a JWT token
-  const { token } = await user.generateAccessToken();
+  const token = await user.generateAccessToken();
 
   // Set the token as a cookie and send the response
   return res
     .status(201)
-    .cookie("token", token, options)
+    .cookie("token", token)
     .json(
       new ApiResponse(201, { id: user._id }, "User registered successfully")
     );
 });
 
-export { registerUser, loginUser };
+const getUserProfile = asyncHandler(async (req, res) => {
+  const token = req.cookies?.token;
+  if (token) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, {}, (err, userData) => {
+      if (err) throw err;
+
+      res.json(userData);
+    });
+  }
+  res.status(401).json("no token");
+});
+
+export { registerUser, loginUser, getUserProfile };
