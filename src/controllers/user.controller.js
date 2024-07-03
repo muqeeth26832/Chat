@@ -20,7 +20,7 @@ const registerUser = asyncHandler(async (req, res) => {
   // Check if the user already exists
   const existedUser = await User.findOne({ username });
   if (existedUser) {
-    throw new ApiError(409, "User with username already exists");
+    return new ApiError(409, "User already exits", ["a", "b"]).send(res);
   }
 
   // Create a new user
@@ -51,12 +51,12 @@ const loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ username }); // all usernames are unique
 
   if (!user) {
-    throw new ApiError(404, "user does not exist");
+    throw new ApiError(404, "user does not exist").send(res);
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid Password");
+    throw new ApiError(401, "Invalid Password").send(res);
   }
 
   // password is correct give user an acces token
@@ -71,7 +71,5 @@ const loginUser = asyncHandler(async (req, res) => {
       new ApiResponse(201, { id: user._id }, "User registered successfully")
     );
 });
-
-
 
 export { registerUser, loginUser };
