@@ -2,13 +2,13 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import jwt from "jsonwebtoken";
+// import jwt from "jsonwebtoken";
 const options = {
   httpOnly: true,
   secure: true,
 };
 const registerUser = asyncHandler(async (req, res) => {
-  console.log("Request body:", req.body); // Log the request body for debugging
+  // console.log("Request body:", req.body); // Log the request body for debugging
 
   const { username, password } = req.body;
 
@@ -27,23 +27,51 @@ const registerUser = asyncHandler(async (req, res) => {
   const user = await User.create({ username, password });
 
   // Create a JWT token
-  const token = jwt.sign(
-    { userId: user._id },
-    process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "1h" }
-  );
+  const { token } = user.generateAccessToken();
 
   // Set the token as a cookie and send the response
-  res
-    .cookie("token", token, options)
+  return res
     .status(201)
+    .cookie("token", token, options)
     .json(
-      new ApiResponse(
-        201,
-        { username: user.username },
-        "User registered successfully"
-      )
+      new ApiResponse(201, { id: user._id }, "User registered successfully")
     );
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  //
+  console.log(req.body);
+  const { username, password } = req.body;
+
+  // Validate input
+  if (!username || !password) {
+    throw new ApiError(400, "all fields required");
+  }
+
+  const user = await User.findOne({ username }); // all usernames are unique
+
+  if (!user) {
+    throw new ApiError(404, "user does not exist");
+  }
+
+  const isPasswordValid = await user.isPasswordCorrect(password);
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid Password");
+  }
+
+  // password is correct give user an acces token
+  // Create a JWT token
+  const { token } = await user.generateAccessToken();
+
+  // Set the token as a cookie and send the response
+  return res
+    .status(201)
+    .cookie("token", token, options)
+    .json(
+      new ApiResponse(201, { id: user._id }, "User registered successfully")
+    );
+});
+
+
+
+export { registerUser, loginUser };
