@@ -73,7 +73,6 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const getUserProfile = asyncHandler(async (req, res) => {
-  console.log("Was called ");
 
   const token = req.cookies?.token;
 
