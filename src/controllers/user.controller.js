@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
+import { Message } from "../models/message.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 const options = {
@@ -73,7 +74,6 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const getUserProfile = asyncHandler(async (req, res) => {
-
   const token = req.cookies?.token;
 
   if (token) {
@@ -86,4 +86,40 @@ const getUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, getUserProfile };
+const getUserChats = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const userData = await getUserDataFromRequest(req);
+  const ourUserId = userData.userId;
+
+  const messages = await Message.find({
+    sender: { $in: [userId, ourUserId] },
+    recipient: { $in: [userId, ourUserId] },
+  }).sort({ createdAt: 1 });
+
+  res.json(messages);
+});
+
+async function getUserDataFromRequest(req) {
+  return new Promise((resolve, reject) => {
+    const token = req.cookies?.token;
+
+    if (token) {
+      jwt.verify(
+        token,
+        process.env.ACCESS_TOKEN_SECRET,
+        {},
+        (err, userData) => {
+          if (err) throw err;
+          resolve(userData);
+        }
+      );
+    } else {
+      reject("no token");
+    }
+  });
+}
+const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({}, { _id: 1, username: 1 });
+  res.json(users);
+});
+export { registerUser, loginUser, getUserProfile, getUserChats, getAllUsers };
