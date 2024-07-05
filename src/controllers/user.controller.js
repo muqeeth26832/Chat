@@ -122,4 +122,16 @@ const getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find({}, { _id: 1, username: 1 });
   res.json(users);
 });
-export { registerUser, loginUser, getUserProfile, getUserChats, getAllUsers };
+
+const logoutUser = asyncHandler(async (req, res) => {
+  res.cookie("token", "", {}).json("ok");
+});
+
+export {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  getUserChats,
+  getAllUsers,
+  logoutUser,
+};
