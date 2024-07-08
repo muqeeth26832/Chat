@@ -89,14 +89,17 @@ const getUserProfile = asyncHandler(async (req, res) => {
 const getUserChats = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const userData = await getUserDataFromRequest(req);
-  const ourUserId = userData.userId;
+  
 
-  const messages = await Message.find({
-    sender: { $in: [userId, ourUserId] },
-    recipient: { $in: [userId, ourUserId] },
-  }).sort({ createdAt: 1 });
+  console.log(userId, ourUserId);
+  if (userId !== null) {
+    const messages = await Message.find({
+      sender: { $in: [userId, ourUserId] },
+      recipient: { $in: [userId, ourUserId] },
+    }).sort({ createdAt: 1 });
+    res.json(messages);
+  }
 
-  res.json(messages);
 });
 
 async function getUserDataFromRequest(req) {
